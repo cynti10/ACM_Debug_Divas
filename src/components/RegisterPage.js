@@ -1,44 +1,64 @@
-import React, { useState } from "react";
-import { TextField, Button, Typography } from "@mui/material";
+import React, { useState } from 'react';
+import { Container, Box, TextField, Button, Typography, Paper } from '@mui/material';
 
 const RegisterPage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Call backend API to register user (we'll integrate it later)
-    console.log("Registered with:", email, password);
+    // Handle registration logic
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <Typography variant="h4" gutterBottom>
-        Register
-      </Typography>
-      <form onSubmit={handleSubmit}>
-        <TextField
-          label="Email"
-          variant="outlined"
-          fullWidth
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{ marginBottom: "20px" }}
-        />
-        <TextField
-          label="Password"
-          variant="outlined"
-          type="password"
-          fullWidth
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{ marginBottom: "20px" }}
-        />
-        <Button type="submit" variant="contained">
+    <Container style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#fafafa' }}>
+      <Box component={Paper} elevation={6} style={{ padding: '40px', width: '100%', maxWidth: '400px', borderRadius: '15px' }}>
+        <Typography variant="h4" gutterBottom style={{ color: '#1976d2', fontWeight: 'bold' }}>
           Register
-        </Button>
-      </form>
-    </div>
+        </Typography>
+        <form onSubmit={handleSubmit}>
+          <TextField
+            label="Email"
+            type="email"
+            variant="outlined"
+            fullWidth
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            margin="normal"
+            required
+          />
+          <TextField
+            label="Password"
+            type="password"
+            variant="outlined"
+            fullWidth
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            margin="normal"
+            required
+          />
+          <TextField
+            label="Confirm Password"
+            type="password"
+            variant="outlined"
+            fullWidth
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            margin="normal"
+            required
+          />
+          <Box mt={2}>
+            <Button variant="contained" fullWidth style={{ backgroundColor: '#1976d2', color: '#fff', padding: '10px 30px' }} type="submit">
+              Register
+            </Button>
+          </Box>
+        </form>
+        <Typography variant="body2" align="center" style={{ marginTop: '15px' }}>
+          Already have an account? <a href="/login" style={{ color: '#1976d2' }}>Login</a>
+        </Typography>
+      </Box>
+    </Container>
   );
 };
 
