@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 # MySQL database configuration
 db_config = {
-    'host': 'localhost',
+    'host': 'votervault-db.mysql.database.azure.com',
     'user': 'Sanjana',
     'password': 'HelloKitty123',
     'database': 'VV_DB'
@@ -87,6 +87,108 @@ def add_user():
             cursor.close()
         if 'connection' in locals() and connection.is_connected():
             connection.close()
+            
+@app.route('/users', methods=['GET'])
+def get_all_users():
+    try:
+        # Connect to the database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor(dictionary=True)
+
+        # Execute the SQL query
+        query = "SELECT * FROM users"
+        cursor.execute(query)
+        users = cursor.fetchall()
+
+        return jsonify(users), 200
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals() and connection.is_connected():
+            connection.close()
+
+# Route to get a single user by ID
+@app.route('/users/<int:user_id>', methods=['GET'])
+def get_user_by_id(user_id):
+    try:
+        # Connect to the database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor(dictionary=True)
+
+        # Execute the SQL query
+        query = "SELECT * FROM users WHERE id = %s"
+        cursor.execute(query, (user_id,))
+        user = cursor.fetchone()
+
+        if user:
+            return jsonify(user), 200
+        else:
+            return jsonify({"error": "User not found"}), 404
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals() and connection.is_connected():
+            connection.close()
+            
+@app.route('/add_vote', methods=['POST'])
+def add_vote():
+    data = request.json  # Extract JSON payload
+    user_id = data.get('user_id')
+    candidate_id = data.get('candidate_id')
+
+    # Validate input
+    if not user_id or not candidate_id:
+        return jsonify({"error": "Both user_id and candidate_id are required"}), 400
+
+    try:
+        # Connect to the MySQL database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+
+        # Insert vote into the table
+        query = "INSERT INTO votes (user_id, candidate_id) VALUES (%s, %s)"
+        cursor.execute(query, (user_id, candidate_id))
+        connection.commit()
+
+        return jsonify({"message": "Vote added successfully", "vote_id": cursor.lastrowid}), 201
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals() and connection.is_connected():
+            connection.close()
+            
+@app.route('/votes/count', methods=['GET'])
+def get_vote_count():
+    try:
+        # Connect to the database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor(dictionary=True)
+
+        # Query to count votes for each candidate
+        query = """
+        SELECT candidate_id, COUNT(*) AS vote_count
+        FROM votes
+        GROUP BY candidate_id
+        ORDER BY vote_count DESC
+        """
+        cursor.execute(query)
+        results = cursor.fetchall()
+
+        return jsonify(results), 200
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals() and connection.is_connected():
+            connection.close()
+
 
 if __name__ == '__main__':
     app.run(debug=True)
