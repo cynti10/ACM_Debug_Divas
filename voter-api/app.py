@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify
 import mysql.connector
+from flask_cors import CORS 
 
 app = Flask(__name__)
+CORS(app) 
 
 # MySQL database configuration
 db_config = {
@@ -88,27 +90,37 @@ def add_user():
         if 'connection' in locals() and connection.is_connected():
             connection.close()
             
-@app.route('/users', methods=['GET'])
-def get_all_users():
+@app.route('/users', methods=['POST'])
+def login():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+
+    if not email or not password:
+        return jsonify({"success": False, "message": "Email and password are required"}), 400
+
     try:
         # Connect to the database
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor(dictionary=True)
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
 
-        # Execute the SQL query
-        query = "SELECT * FROM users"
-        cursor.execute(query)
-        users = cursor.fetchall()
+        # Search for the user in the database
+        query = "SELECT name FROM users WHERE email = %s AND password_hash = %s"
+        cursor.execute(query, (email, password))
+        user = cursor.fetchone()
 
-        return jsonify(users), 200
+        if user:
+            return jsonify({"success": True, "user": {"name": user["name"]}})
+        else:
+            return jsonify({"success": False, "message": "Invalid email or password"}), 401
+
     except mysql.connector.Error as err:
-        return jsonify({"error": str(err)}), 500
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
-        if 'connection' in locals() and connection.is_connected():
-            connection.close()
+        print("Database error:", err)
+        return jsonify({"success": False, "message": "Server error. Please try again later."}), 500
 
+    finally:
+        cursor.close()
+        conn.close()
 # Route to get a single user by ID
 @app.route('/users/<int:user_id>', methods=['GET'])
 def get_user_by_id(user_id):
@@ -170,11 +182,12 @@ def get_vote_count():
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
 
-        # Query to count votes for each candidate
+        # Query to count votes for each candidate and join with candidates table to get their names
         query = """
-        SELECT candidate_id, COUNT(*) AS vote_count
-        FROM votes
-        GROUP BY candidate_id
+        SELECT c.name, COUNT(*) AS vote_count
+        FROM votes v
+        JOIN candidates c ON v.candidate_id = c.id
+        GROUP BY v.candidate_id
         ORDER BY vote_count DESC
         """
         cursor.execute(query)
