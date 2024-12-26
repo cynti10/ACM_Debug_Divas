@@ -5,11 +5,37 @@ const VotingPage = () => {
   const [selectedOption, setSelectedOption] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleVote = () => {
-    if (selectedOption) {
-      setMessage("Your vote has been cast successfully!");
-    } else {
+  const handleVote = async () => {
+    if (!selectedOption) {
       setMessage("Please select an option to vote.");
+      return;
+    }
+
+    try {
+      // Simulate user ID for demonstration (replace with actual user ID in production)
+      const userId = 1;
+
+      // API call to save the vote
+      const response = await fetch("http://127.0.0.1:5000/add_vote", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          candidate_id: selectedOption, // Send selected candidate ID
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage("Your vote has been cast successfully!");
+      } else {
+        setMessage(`Error: ${data.error || "Something went wrong"}`);
+      }
+    } catch (error) {
+      setMessage(`Error: ${error.message || "Unable to submit your vote."}`);
     }
   };
 
@@ -43,11 +69,11 @@ const VotingPage = () => {
             variant="contained"
             fullWidth
             style={{
-              backgroundColor: selectedOption === "Option 1" ? "#388e3c" : "#1976d2",
+              backgroundColor: selectedOption === "1" ? "#388e3c" : "#1976d2",
               color: "#fff",
               marginBottom: "10px",
             }}
-            onClick={() => setSelectedOption("Option 1")}
+            onClick={() => setSelectedOption("1")} // Option ID: 1
           >
             Option 1
           </Button>
@@ -55,11 +81,11 @@ const VotingPage = () => {
             variant="contained"
             fullWidth
             style={{
-              backgroundColor: selectedOption === "Option 2" ? "#388e3c" : "#1976d2",
+              backgroundColor: selectedOption === "2" ? "#388e3c" : "#1976d2",
               color: "#fff",
               marginBottom: "10px",
             }}
-            onClick={() => setSelectedOption("Option 2")}
+            onClick={() => setSelectedOption("2")} // Option ID: 2
           >
             Option 2
           </Button>
@@ -67,11 +93,11 @@ const VotingPage = () => {
             variant="contained"
             fullWidth
             style={{
-              backgroundColor: selectedOption === "Option 3" ? "#388e3c" : "#1976d2",
+              backgroundColor: selectedOption === "3" ? "#388e3c" : "#1976d2",
               color: "#fff",
               marginBottom: "10px",
             }}
-            onClick={() => setSelectedOption("Option 3")}
+            onClick={() => setSelectedOption("3")} // Option ID: 3
           >
             Option 3
           </Button>
